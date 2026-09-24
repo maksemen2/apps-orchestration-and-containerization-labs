@@ -1,0 +1,9 @@
+FROM golang:1.27.1 AS build
+WORKDIR /src
+COPY api/ ./
+RUN CGO_ENABLED=0 go build -o /out/lab-server .
+
+FROM scratch
+COPY --from=build --chmod=0555 /out/lab-server /lab-server
+USER 1000:1000
+ENTRYPOINT ["/lab-server"]
