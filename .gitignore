@@ -1,0 +1,13 @@
+# Результаты сборки API
+/lab-1/lab-server
+/lab-1/api/api
+
+# Файловая система и журналы запусков gVisor
+/lab-1/gvisor-bundle/rootfs/
+/lab-1/gvisor-bundle/rootfs.tar
+/lab-1/gvisor-bundle/*.debug.log
+
+# Снимки метрик и локальное окружение
+/lab-1/monitoring/cadvisor-metrics.txt
+.venv/
+__pycache__/

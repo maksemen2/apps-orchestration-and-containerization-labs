@@ -1,0 +1,11 @@
+# В сборке нужны исходники API и lab-server для образа Ubuntu.
+gvisor-bundle/
+monitoring/
+screenshots/
+README.md
+mydocker.sh
+*.bpf
+*.apparmor
+.venv/
+api/.venv/
+api/api
