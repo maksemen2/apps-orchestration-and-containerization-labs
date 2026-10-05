@@ -1,6 +1,17 @@
-# Результаты сборки API
+# Результаты сборки сервисов
 /lab-1/lab-server
 /lab-1/api/api
+
+/lab-2/api/api
+/lab-2/api/api.exe
+/lab-2/api/lab-server
+/lab-2/api/lab-server.exe
+/lab-2/api/*.test
+/lab-2/api/*.test.exe
+/lab-2/alert-receiver/alert-receiver
+/lab-2/alert-receiver/alert-receiver.exe
+/lab-2/alert-receiver/*.test
+/lab-2/alert-receiver/*.test.exe
 
 # Файловая система и журналы запусков gVisor
 /lab-1/gvisor-bundle/rootfs/
@@ -9,5 +20,7 @@
 
 # Снимки метрик и локальное окружение
 /lab-1/monitoring/cadvisor-metrics.txt
+/lab-2/api/coverage.out
+/lab-2/alert-receiver/coverage.out
 .venv/
 __pycache__/

@@ -1,0 +1,124 @@
+{
+    "uid":  "lab2-api-red",
+    "title":  "Lab 2 - API RED",
+    "schemaVersion":  42,
+    "version":  1,
+    "tags":  [
+                 "lab2",
+                 "api"
+             ],
+    "timezone":  "browser",
+    "refresh":  "15s",
+    "time":  {
+                 "to":  "now",
+                 "from":  "now-15m"
+             },
+    "annotations":  {
+                        "list":  [
+
+                                 ]
+                    },
+    "templating":  {
+                       "list":  [
+
+                                ]
+                   },
+    "panels":  [
+                   {
+                       "id":  1,
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "min":  0,
+                                                            "unit":  "reqps"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  24,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "instant":  false,
+                                           "expr":  "sum(rate(http_requests_total{namespace=\"lab2\",service=\"api\",route!=\"/health\"}[2m]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "type":  "timeseries",
+                       "title":  "RPS"
+                   },
+                   {
+                       "id":  2,
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "min":  0,
+                                                            "unit":  "percent"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "y":  8,
+                                       "w":  24,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "instant":  false,
+                                           "expr":  "100 * (sum(rate(http_errors_total{namespace=\"lab2\",service=\"api\",route!=\"/health\"}[2m]))) / (sum(rate(http_requests_total{namespace=\"lab2\",service=\"api\",route!=\"/health\"}[2m])))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "type":  "timeseries",
+                       "title":  "Errors"
+                   },
+                   {
+                       "id":  3,
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "min":  0,
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "y":  16,
+                                       "w":  24,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "instant":  false,
+                                           "expr":  "histogram_quantile(\n  0.95,\n  sum by (le) (\n    rate(http_request_duration_seconds_bucket{\n      namespace=\"lab2\",\n      service=\"api\",\n      route!=\"/health\"\n    }[2m])\n  )\n)",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "type":  "timeseries",
+                       "title":  "Response time p95"
+                   }
+               ]
+}

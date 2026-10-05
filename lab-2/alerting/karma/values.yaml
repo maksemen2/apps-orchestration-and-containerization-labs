@@ -1,0 +1,19 @@
+fullnameOverride: karma
+
+service:
+  type: ClusterIP
+  port: 80
+
+configMap:
+  enabled: true
+  rawConfig:
+    alertmanager:
+      interval: 15s
+      servers:
+        - name: lab2
+          uri: http://monitoring-alertmanager.monitoring.svc.cluster.local:9093
+          external_uri: http://127.0.0.1:19093
+          timeout: 10s
+          proxy: true
+    ui:
+      refresh: 15s

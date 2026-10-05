@@ -1,0 +1,66 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "api.fullname" . }}-alerts
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+    release: monitoring
+spec:
+  groups:
+    - name: api-red
+      interval: 15s
+      rules:
+        - alert: ApiHighErrorRate
+          expr: |
+            (
+              sum by (namespace, service) (
+                rate(http_errors_total{namespace="lab2",service="api",route!="/health"}[2m])
+              )
+              /
+              sum by (namespace, service) (
+                rate(http_requests_total{namespace="lab2",service="api",route!="/health"}[2m])
+              )
+            ) > 0.05
+            and
+            sum by (namespace, service) (
+              increase(http_requests_total{namespace="lab2",service="api",route!="/health"}[2m])
+            ) >= 20
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "API: more than 5% of requests return 5xx"
+            description: "Error ratio is above 5% for 2 minutes with at least 20 requests in each 2-minute window."
+            runbook: "Check API error logs in Loki, related traces in Jaeger, and recent deployments."
+        - alert: ApiHighLatency
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (namespace, service, le) (
+                rate(http_request_duration_seconds_bucket{namespace="lab2",service="api",route!="/health"}[2m])
+              )
+            ) > 1
+            and
+            sum by (namespace, service) (
+              increase(http_requests_total{namespace="lab2",service="api",route!="/health"}[2m])
+            ) >= 20
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "API: p95 response time exceeds 1 second"
+            description: "P95 is above 1 second for 2 minutes with at least 20 requests in each 2-minute window."
+            runbook: "Inspect slow traces in Jaeger and check API resource usage and dependency latency."
+        - alert: ApiUnavailable
+          expr: |
+            max by (namespace, deployment) (
+              kube_deployment_status_replicas_available{namespace="lab2",deployment="api"}
+            ) == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: api
+          annotations:
+            summary: "API has no available replicas"
+            description: "Deployment lab2/api has zero available replicas for 1 minute."
+            runbook: "Inspect API pods and Deployment events; check the image, configuration, resources and readiness probes; restore a healthy replica."

@@ -1,0 +1,16 @@
+controller:
+  type: daemonset
+  volumes:
+    extra:
+      - name: alloy-data
+        hostPath:
+          path: /var/lib/alloy
+          type: DirectoryOrCreate
+
+alloy:
+  storagePath: /var/lib/alloy
+  mounts:
+    varlog: true
+    extra:
+      - name: alloy-data
+        mountPath: /var/lib/alloy

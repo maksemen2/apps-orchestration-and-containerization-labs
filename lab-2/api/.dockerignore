@@ -1,0 +1,6 @@
+.git
+*.exe
+*.test
+coverage.out
+api
+lab-server

@@ -1,0 +1,5 @@
+Webhook для Alertmanager:
+  http://{{ include "alert-receiver.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}/alerts
+
+Просмотр полученных уведомлений:
+  kubectl --context kind-lab2 --namespace {{ .Release.Namespace }} logs deployment/{{ include "alert-receiver.fullname" . }} --tail=20

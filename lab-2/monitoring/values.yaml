@@ -1,0 +1,62 @@
+fullnameOverride: monitoring
+
+alertmanager:
+  enabled: true
+  config:
+    inhibit_rules: []
+    route:
+      receiver: local-webhook
+      group_by: ['namespace', 'alertname']
+      group_wait: 10s
+      group_interval: 30s
+      repeat_interval: 5m
+      routes: []
+    receivers:
+      - name: local-webhook
+        webhook_configs:
+          - url: http://alert-receiver.monitoring.svc.cluster.local:8080/alerts
+            send_resolved: true
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+
+defaultRules:
+  create: false
+
+grafana:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 1Gi
+  additionalDataSources:
+      - name: Loki
+        type: loki
+        uid: loki
+        access: proxy
+        url: http://loki.monitoring.svc.cluster.local:3100
+        isDefault: false
+        jsonData:
+          derivedFields:
+            - name: TraceID
+              matcherRegex: '"trace_id"\s*:\s*"([a-f0-9]{32})"'
+              url: 'http://127.0.0.1:16686/trace/$${__value.raw}'
+              urlDisplayLabel: 'Open in Jaeger'
+
+prometheus:
+  prometheusSpec:
+    scrapeInterval: 15s
+    retention: 2d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi

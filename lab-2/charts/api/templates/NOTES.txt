@@ -1,0 +1,7 @@
+API: namespace {{ .Release.Namespace }}, Service {{ include "api.fullname" . }}.
+
+Доступ к API в локальном кластере:
+  kubectl --context kind-lab2 --namespace {{ .Release.Namespace }} port-forward svc/{{ include "api.fullname" . }} 18080:{{ .Values.service.port }}
+
+Проверка из другого терминала:
+  curl.exe http://127.0.0.1:18080/health
