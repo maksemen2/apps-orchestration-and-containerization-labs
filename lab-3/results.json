@@ -1,0 +1,90 @@
+{
+  "recordedAtUtc": "2026-10-12T00:05:09.1755088Z",
+  "context": "kind-lab2",
+  "healthyRollout": {
+    "timeline": {
+      "samples": 57,
+      "images": [
+        "registry.lab.local/shop/api:0.1.0",
+        "registry.lab.local/shop/api:0.2.0"
+      ],
+      "minimumAvailable": 3.0,
+      "maximumActivePods": 4.0
+    },
+    "httpRequests": 1182,
+    "failed": 0
+  },
+  "brokenRollout": {
+    "timeline": {
+      "samples": 140,
+      "minimumAvailable": 3.0,
+      "observedProgressDeadlineExceeded": true,
+      "maximumActivePods": 4.0
+    },
+    "httpRequests": 2956,
+    "rollbackRevision": 6,
+    "failed": 0
+  },
+  "postgresReconciliation": {
+    "oldPodUID": "a7a839e4-cdcc-4f14-ae2b-2e967411231c",
+    "newPodUID": "2e137d5d-321e-43ac-a3bb-b887c2c1073f",
+    "pvcUID": "2a83af30-ddff-4ecd-affb-3f02a90244d5",
+    "deleteRequested": "2026-10-11T23:47:57.0817418Z",
+    "replacementCreated": "2026-10-11T23:50:58Z",
+    "samePVC": true
+  },
+  "controlPlane": {
+    "healthProbe": {
+      "total": 2462,
+      "failed": 0,
+      "versions": [
+        "0.2.0"
+      ]
+    },
+    "http200Count": 100,
+    "manifestRestored": "2026-10-11T23:54:13Z",
+    "downtimeSeconds": 100.0,
+    "unexpectedStatuses": [],
+    "ordersCreatedHttp201": 20,
+    "down": "2026-10-11T23:52:33Z"
+  },
+  "processedOrders": 71,
+  "finalReplicas": [
+    {
+      "chartReplicas": 3,
+      "availableReplicas": 3,
+      "readyReplicas": 3,
+      "deploymentReplicas": 3,
+      "deployment": "shop-api",
+      "updatedReplicas": 3
+    },
+    {
+      "chartReplicas": 2,
+      "availableReplicas": 2,
+      "readyReplicas": 2,
+      "deploymentReplicas": 2,
+      "deployment": "shop-worker",
+      "updatedReplicas": 2
+    }
+  ],
+  "finalRules": [
+    {
+      "name": "ShopApiUnavailable",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null
+    },
+    {
+      "name": "ShopApiHighErrorRate",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null
+    },
+    {
+      "name": "ShopDatabaseUnavailable",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null
+    }
+  ]
+}

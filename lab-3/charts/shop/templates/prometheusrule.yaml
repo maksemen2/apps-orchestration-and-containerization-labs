@@ -1,0 +1,42 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: shop
+    {{- include "shop.labels" . | nindent 4 }}
+    release: {{ .Values.monitoring.release | quote }}
+spec:
+  groups:
+    - name: shop.availability
+      rules:
+        - alert: ShopApiUnavailable
+          expr: kube_deployment_status_replicas_available{namespace="{{ .Release.Namespace }}",deployment="{{ .Release.Name }}-api"} == 0
+          for: 30s
+          labels:
+            severity: critical
+          annotations:
+            summary: Shop API has no available replicas
+            description: No API replica is available for 30 seconds; inspect Deployment and Pod conditions.
+        - alert: ShopApiHighErrorRate
+          expr: >-
+            (sum(rate(http_errors_total{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route!~"/health|/ready|/metrics"}[1m])) /
+            clamp_min(sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route!~"/health|/ready|/metrics"}[1m])), 0.001) > 0.05)
+            and
+            (sum(increase(http_requests_total{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route!~"/health|/ready|/metrics"}[1m])) >= 20)
+          for: 30s
+          labels:
+            severity: warning
+          annotations:
+            summary: Shop API business requests have more than 5% server errors
+            description: Requires at least 20 business requests in one minute; health probes are excluded.
+        - alert: ShopDatabaseUnavailable
+          expr: max(database_ready{namespace="{{ .Release.Namespace }}",service=~"{{ .Release.Name }}-(api|worker)"}) == 0
+          for: 30s
+          labels:
+            severity: critical
+          annotations:
+            summary: All observed Shop clients cannot reach PostgreSQL
+            description: Maximum database readiness is zero for 30 seconds; one failing client alone does not trigger this alert.
+{{- end }}

@@ -22,5 +22,13 @@
 /lab-1/monitoring/cadvisor-metrics.txt
 /lab-2/api/coverage.out
 /lab-2/alert-receiver/coverage.out
+
+/lab-3/services/api
+/lab-3/services/api.exe
+/lab-3/services/worker
+/lab-3/services/worker.exe
+/lab-3/services/*.test
+/lab-3/services/*.test.exe
+/lab-3/services/coverage.out
 .venv/
 __pycache__/

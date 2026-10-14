@@ -1,0 +1,7 @@
+replicas: 1
+validatingWebhookFailurePolicy: Fail
+# Keep infrastructure reconciliation independent of the policy webhook.
+# Policies separately exclude the same namespaces; this also handles outages.
+validatingWebhookMatchConditions:
+  - name: exclude-infrastructure-namespaces
+    expression: '!has(request.namespace) || !(request.namespace in ["kube-system", "kube-public", "kube-node-lease", "local-path-storage", "monitoring", "gatekeeper-system", "cnpg-system"])'

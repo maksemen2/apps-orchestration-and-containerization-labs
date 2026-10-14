@@ -1,0 +1,107 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: Lab3RequiredResources
+metadata:
+  name: lab3-require-resources
+spec:
+  enforcementAction: deny
+  match:
+    scope: Namespaced
+    kinds:
+      - apiGroups: [""]
+        kinds: [Pod]
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - local-path-storage
+      - monitoring
+      - gatekeeper-system
+      - cnpg-system
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: Lab3TrustedImages
+metadata:
+  name: lab3-trusted-images
+spec:
+  enforcementAction: deny
+  match:
+    scope: Namespaced
+    kinds:
+      - apiGroups: [""]
+        kinds: [Pod]
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - local-path-storage
+      - monitoring
+      - gatekeeper-system
+      - cnpg-system
+  parameters:
+    prefixes:
+      - registry.lab.local/shop/
+      - ghcr.io/cloudnative-pg/
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: Lab3RequiredLabels
+metadata:
+  name: lab3-require-labels
+spec:
+  enforcementAction: deny
+  match:
+    scope: Namespaced
+    kinds:
+      - apiGroups: [""]
+        kinds: [Pod]
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - local-path-storage
+      - monitoring
+      - gatekeeper-system
+      - cnpg-system
+  parameters:
+    labels:
+      - app.kubernetes.io/name
+      - app.kubernetes.io/instance
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: Lab3NoPrivileged
+metadata:
+  name: lab3-no-privileged
+spec:
+  enforcementAction: deny
+  match:
+    scope: Namespaced
+    kinds:
+      - apiGroups: [""]
+        kinds: [Pod]
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - local-path-storage
+      - monitoring
+      - gatekeeper-system
+      - cnpg-system
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: Lab3NoHostNamespaces
+metadata:
+  name: lab3-no-host-namespaces
+spec:
+  enforcementAction: deny
+  match:
+    scope: Namespaced
+    kinds:
+      - apiGroups: [""]
+        kinds: [Pod]
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - local-path-storage
+      - monitoring
+      - gatekeeper-system
+      - cnpg-system

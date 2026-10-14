@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lab3-invalid-resources
+  namespace: shop
+  labels:
+    app.kubernetes.io/name: admission-test
+    app.kubernetes.io/instance: shop
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test
+      image: ghcr.io/cloudnative-pg/postgresql:17.6
+      imagePullPolicy: IfNotPresent
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+      securityContext:
+        privileged: false

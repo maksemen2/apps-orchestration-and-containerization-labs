@@ -1,0 +1,164 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: lab3requiredresources
+spec:
+  crd:
+    spec:
+      names:
+        kind: Lab3RequiredResources
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      code:
+        - engine: Rego
+          source:
+            version: v1
+            rego: |
+              package lab3requiredresources
+
+              violation contains {"msg": msg} if {
+                some field in ["containers", "initContainers"]
+                some container in object.get(input.review.object.spec, field, [])
+                some section in ["requests", "limits"]
+                some resource in ["cpu", "memory"]
+                resources := object.get(container, "resources", {})
+                values := object.get(resources, section, {})
+                object.get(values, resource, "") == ""
+                msg := sprintf("%s %s must set resources.%s.%s", [field, container.name, section, resource])
+              }
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: lab3trustedimages
+spec:
+  crd:
+    spec:
+      names:
+        kind: Lab3TrustedImages
+      validation:
+        openAPIV3Schema:
+          type: object
+          required: [prefixes]
+          properties:
+            prefixes:
+              type: array
+              minItems: 1
+              items:
+                type: string
+                minLength: 1
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      code:
+        - engine: Rego
+          source:
+            version: v1
+            rego: |
+              package lab3trustedimages
+
+              allowed(image) if {
+                some prefix in input.parameters.prefixes
+                startswith(image, prefix)
+              }
+
+              violation contains {"msg": msg} if {
+                some field in ["containers", "initContainers", "ephemeralContainers"]
+                some container in object.get(input.review.object.spec, field, [])
+                not allowed(container.image)
+                msg := sprintf("%s %s image %s must use an allowed prefix: %v", [field, container.name, container.image, input.parameters.prefixes])
+              }
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: lab3requiredlabels
+spec:
+  crd:
+    spec:
+      names:
+        kind: Lab3RequiredLabels
+      validation:
+        openAPIV3Schema:
+          type: object
+          required: [labels]
+          properties:
+            labels:
+              type: array
+              minItems: 1
+              items:
+                type: string
+                minLength: 1
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      code:
+        - engine: Rego
+          source:
+            version: v1
+            rego: |
+              package lab3requiredlabels
+
+              violation contains {"msg": msg} if {
+                some label in input.parameters.labels
+                labels := object.get(input.review.object.metadata, "labels", {})
+                trim_space(object.get(labels, label, "")) == ""
+                msg := sprintf("Pod must have a non-empty label %s", [label])
+              }
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: lab3noprivileged
+spec:
+  crd:
+    spec:
+      names:
+        kind: Lab3NoPrivileged
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      code:
+        - engine: Rego
+          source:
+            version: v1
+            rego: |
+              package lab3noprivileged
+
+              violation contains {"msg": msg} if {
+                some field in ["containers", "initContainers", "ephemeralContainers"]
+                some container in object.get(input.review.object.spec, field, [])
+                context := object.get(container, "securityContext", {})
+                object.get(context, "privileged", false) == true
+                msg := sprintf("%s %s must not be privileged", [field, container.name])
+              }
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: lab3nohostnamespaces
+spec:
+  crd:
+    spec:
+      names:
+        kind: Lab3NoHostNamespaces
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      code:
+        - engine: Rego
+          source:
+            version: v1
+            rego: |
+              package lab3nohostnamespaces
+
+              violation contains {"msg": msg} if {
+                some field in ["hostNetwork", "hostPID", "hostIPC"]
+                object.get(input.review.object.spec, field, false) == true
+                msg := sprintf("Pod must not enable %s", [field])
+              }
