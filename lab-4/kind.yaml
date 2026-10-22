@@ -1,0 +1,27 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: lab4
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          taints: []
+  - role: worker
+kubeadmConfigPatches:
+  - |
+    kind: KubeletConfiguration
+    # Docker Desktop exposes 32 CPUs and about 30 GiB to every kind node.
+    # Leave about 3 CPUs / 3 GiB per node available for this experiment.
+    systemReserved:
+      cpu: "29"
+      memory: "27Gi"
+    enforceNodeAllocatable:
+      - pods
+    evictionHard:
+      memory.available: "256Mi"
+      nodefs.available: "0%"
+      nodefs.inodesFree: "0%"
+      imagefs.available: "0%"
+    evictionPressureTransitionPeriod: 0s

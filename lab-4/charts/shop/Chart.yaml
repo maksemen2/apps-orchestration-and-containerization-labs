@@ -1,0 +1,6 @@
+apiVersion: v2
+name: shop
+description: Shop API, worker, batch and CloudNativePG database for Lab 4 scheduling
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

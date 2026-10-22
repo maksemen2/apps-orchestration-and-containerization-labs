@@ -1,0 +1,41 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: shop
+    {{- include "shop.labels" . | nindent 4 }}
+    release: {{ .Values.monitoring.release | quote }}
+spec:
+  groups:
+    - name: shop.lab4.sla
+      rules:
+        - alert: ShopOrderP95TooHigh
+          expr: >-
+            histogram_quantile(0.95, sum by (le)
+            (rate(http_request_duration_seconds_bucket{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route="/order",method="POST"}[5m]))) > 0.3
+          for: 30s
+          labels:
+            severity: warning
+          annotations:
+            summary: Order POST p95 exceeds 300 ms
+        - alert: ShopOrderErrorRateTooHigh
+          expr: >-
+            sum(rate(http_errors_total{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route="/order",method="POST"}[5m])) /
+            clamp_min(sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route="/order",method="POST"}[5m])), 0.001) > 0.01
+          for: 30s
+          labels:
+            severity: warning
+          annotations:
+            summary: Order POST server error rate exceeds 1 percent
+        - alert: ShopBatchDegraded
+          expr: >-
+            kube_deployment_spec_replicas{namespace="{{ .Release.Namespace }}",deployment="{{ .Release.Name }}-batch"} >
+            kube_deployment_status_replicas_available{namespace="{{ .Release.Namespace }}",deployment="{{ .Release.Name }}-batch"}
+          for: 30s
+          labels:
+            severity: info
+          annotations:
+            summary: Batch has fewer available replicas than desired
+{{- end }}

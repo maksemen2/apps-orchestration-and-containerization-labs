@@ -1,0 +1,77 @@
+api:
+  replicas: 3
+  placement:
+    # topologySpreadConstraints or podAntiAffinity. On two nodes, a third
+    # replica requires a soft anti-affinity preference.
+    mode: topologySpreadConstraints
+  image:
+    repository: registry.lab.local/shop/api
+    tag: "0.2.0"
+    pullPolicy: IfNotPresent
+  healthFail: false
+  resources:
+    requests:
+      cpu: 10m
+      memory: 100Mi
+    limits:
+      cpu: 10m
+      memory: 100Mi
+  pdb:
+    minAvailable: 2
+worker:
+  replicas: 2
+  image:
+    repository: registry.lab.local/shop/worker
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  healthFail: false
+  resources:
+    requests:
+      cpu: 10m
+      memory: 100Mi
+    limits:
+      cpu: 500m
+      memory: 100Mi
+batch:
+  replicas: 1
+  image:
+    repository: registry.lab.local/shop/batch
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  cpuWorkers: 1
+  memoryMiB: 128
+  memoryStepMiB: 16
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+priority:
+  high: 100000
+  batch: -1000
+database:
+  instances: 1
+  image: ghcr.io/cloudnative-pg/postgresql:17.6
+  # Single-instance laboratory: preserve existing SQL sessions during API outage.
+  isolationCheckEnabled: false
+  storage:
+    size: 1Gi
+    storageClass: standard
+  resources:
+    requests:
+      # CNPG is unsupported by KRR; same algorithm applied to Prometheus data.
+      cpu: 31m
+      memory: 100Mi
+    limits:
+      cpu: 31m
+      memory: 100Mi
+  # CNPG owns its PDB. For one instance this blocks voluntary primary eviction.
+  enablePDB: true
+monitoring:
+  enabled: true
+  release: monitoring
+  scrapeInterval: 15s
+  dashboard:
+    enabled: true

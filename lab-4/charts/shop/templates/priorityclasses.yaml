@@ -1,0 +1,19 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ .Release.Name }}-critical
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+value: {{ .Values.priority.high }}
+globalDefault: false
+description: Critical API and PostgreSQL pods for the Shop SLA.
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ .Release.Name }}-batch
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+value: {{ .Values.priority.batch }}
+globalDefault: false
+description: Preemptible batch load for the Shop scheduling lab.

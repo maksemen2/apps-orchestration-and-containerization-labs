@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-batch
+  labels:
+    app.kubernetes.io/name: batch
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.batch.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: batch
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: batch
+        {{- include "shop.labels" . | nindent 8 }}
+    spec:
+      priorityClassName: {{ .Release.Name }}-batch
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: batch
+          image: {{ printf "%s:%s" .Values.batch.image.repository .Values.batch.image.tag | quote }}
+          imagePullPolicy: {{ .Values.batch.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: CPU_WORKERS
+              value: {{ .Values.batch.cpuWorkers | quote }}
+            - name: MEMORY_MIB
+              value: {{ .Values.batch.memoryMiB | quote }}
+            - name: MEMORY_STEP_MIB
+              value: {{ .Values.batch.memoryStepMiB | quote }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            {{- toYaml .Values.batch.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-batch
+  labels:
+    app.kubernetes.io/name: batch
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: batch
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
