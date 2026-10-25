@@ -1,0 +1,15 @@
+{{- if .Values.workloads.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-api
+  labels:
+    app.kubernetes.io/name: {{ .Values.api.label | quote }}
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.api.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.api.label | quote }}
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+{{- end }}

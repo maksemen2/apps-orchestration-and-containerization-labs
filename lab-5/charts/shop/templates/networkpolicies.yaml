@@ -1,0 +1,189 @@
+{{- if and .Values.workloads.enabled .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-default-deny
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-allow-dns
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.dns.namespace | quote }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.dns.podLabels | nindent 14 }}
+      ports:
+        - protocol: UDP
+          port: {{ .Values.networkPolicy.dns.port }}
+        - protocol: TCP
+          port: {{ .Values.networkPolicy.dns.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-api-ingress
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.api.label | quote }}
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.client.namespace | quote }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.client.podLabels | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.api.port }}
+    {{- if .Values.networkPolicy.apiExternalCIDRs }}
+    - from:
+        {{- range .Values.networkPolicy.apiExternalCIDRs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.api.port }}
+    {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-worker-monitoring-ingress
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.worker.label | quote }}
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  policyTypes: [Ingress]
+  {{- if .Values.networkPolicy.monitoringCIDRs }}
+  ingress:
+    - from:
+        {{- range .Values.networkPolicy.monitoringCIDRs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.worker.port }}
+  {{- else }}
+  ingress: []
+  {{- end }}
+{{- range $component := list "api" "worker" }}
+{{- $settings := index $.Values $component }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $.Release.Name }}-{{ $component }}-to-postgres
+  labels:
+    {{- include "shop.labels" $ | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+      app.kubernetes.io/name: {{ $settings.label | quote }}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $.Values.database.label | quote }}
+              app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+      ports:
+        - protocol: TCP
+          port: {{ index $.Values.networkPolicy.databaseEgressPorts $component }}
+{{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-postgres
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.database.label | quote }}
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: {{ .Release.Name | quote }}
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - {{ .Values.networkPolicy.databaseIngressLabels.api | quote }}
+                  - {{ .Values.networkPolicy.databaseIngressLabels.worker | quote }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.database.port }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.cnpgOperator.namespace | quote }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.cnpgOperator.podLabels | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.database.instanceManagerPort }}
+    {{- if gt (int .Values.database.instances) 1 }}
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ .Values.database.label | quote }}
+              app.kubernetes.io/instance: {{ .Release.Name | quote }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.database.port }}
+        - protocol: TCP
+          port: {{ .Values.database.instanceManagerPort }}
+    {{- end }}
+  egress:
+    - to:
+        {{- range .Values.networkPolicy.apiServerCIDRs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.networkPolicy.apiServerPort }}
+    {{- if gt (int .Values.database.instances) 1 }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ .Values.database.label | quote }}
+              app.kubernetes.io/instance: {{ .Release.Name | quote }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.database.port }}
+        - protocol: TCP
+          port: {{ .Values.database.instanceManagerPort }}
+    {{- end }}
+{{- end }}

@@ -1,0 +1,36 @@
+{{- if .Values.workloads.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Release.Name }}-db
+  labels:
+    app.kubernetes.io/name: {{ .Values.database.label | quote }}
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.database.instances }}
+  enablePDB: {{ .Values.database.enablePDB }}
+  imageName: {{ .Values.database.image | quote }}
+  imagePullPolicy: IfNotPresent
+  probes:
+    liveness:
+      isolationCheck:
+        enabled: {{ .Values.database.isolationCheckEnabled }}
+  inheritedMetadata:
+    labels:
+      app.kubernetes.io/name: {{ .Values.database.label | quote }}
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+      app.kubernetes.io/part-of: shop
+  bootstrap:
+    initdb:
+      database: shop
+      owner: shop
+  postgresql:
+    parameters:
+      shared_buffers: "32MB"
+      max_connections: "50"
+  storage:
+    size: {{ .Values.database.storage.size | quote }}
+    storageClass: {{ .Values.database.storage.storageClass | quote }}
+  resources:
+    {{- toYaml .Values.database.resources | nindent 4 }}
+{{- end }}

@@ -1,0 +1,60 @@
+{
+  "uid": "lab5-network",
+  "title": "Lab 5 — Сеть Cilium и DNS",
+  "description": "Сеть отдельного кластера lab5. Hubble считает наблюдаемые события на узлах: один пакет может наблюдаться несколько раз. RST/SYN — диагностический сигнал, а не вероятность отказа соединения. CoreDNS собирается через один NodePort; держите одну реплику CoreDNS для стабильных счётчиков.",
+  "tags": ["lab5", "cilium", "network"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "5s",
+  "time": {"from": "now-15m", "to": "now"},
+  "annotations": {"list": []},
+  "templating": {"list": []},
+  "panels": [
+    {
+      "id": 1,
+      "title": "Блокировки политиками, пакетов/с",
+      "description": "POLICY_DENIED по наблюдающему узлу. Порог алерта: суммарно > 0.1/с за минуту в течение 30 с.",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "pps", "min": 0, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"refId": "A", "expr": "sum by (node) (rate(hubble_drop_total{cluster=\"lab5\",reason=\"POLICY_DENIED\"}[1m]))", "legendFormat": "{{node}}"}]
+    },
+    {
+      "id": 2,
+      "title": "Сетевые события по verdict, событий/с",
+      "description": "Частота наблюдений Hubble по verdict. Число событий не равно числу запросов приложения.",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "ops", "min": 0, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"refId": "A", "expr": "sum by (verdict) (rate(hubble_flows_processed_total{cluster=\"lab5\"}[1m]))", "legendFormat": "{{verdict}}"}]
+    },
+    {
+      "id": 3,
+      "title": "TCP SYN и RST, пакетов/с",
+      "description": "Наблюдаемые TCP-флаги. Алерт: RST/SYN > 0.5 при SYN > 0.1/с в течение 30 с.",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 9},
+      "fieldConfig": {"defaults": {"unit": "pps", "min": 0, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"refId": "A", "expr": "sum by (flag) (rate(hubble_tcp_flags_total{cluster=\"lab5\",flag=~\"SYN|RST\"}[1m]))", "legendFormat": "{{flag}}"}]
+    },
+    {
+      "id": 4,
+      "title": "Ответы DNS по rcode, ответов/с",
+      "description": "CoreDNS: NOERROR, NXDOMAIN, SERVFAIL, REFUSED и другие коды. Алерт отслеживает SERVFAIL/REFUSED.",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 9},
+      "fieldConfig": {"defaults": {"unit": "ops", "min": 0, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"refId": "A", "expr": "sum by (rcode) (rate(coredns_dns_responses_total{cluster=\"lab5\"}[1m]))", "legendFormat": "{{rcode}}"}]
+    }
+  ]
+}

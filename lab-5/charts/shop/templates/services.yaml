@@ -1,0 +1,28 @@
+{{- if .Values.workloads.enabled }}
+{{- range $component := list "api" "worker" }}
+{{- $settings := index $.Values $component }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Release.Name }}-{{ $component }}
+  labels:
+    app.kubernetes.io/name: {{ $settings.label | quote }}
+    {{- include "shop.labels" $ | nindent 4 }}
+spec:
+  type: {{ $settings.service.type }}
+  {{- if eq $settings.service.type "NodePort" }}
+  externalTrafficPolicy: {{ $settings.service.externalTrafficPolicy }}
+  {{- end }}
+  selector:
+    app.kubernetes.io/name: {{ $settings.label | quote }}
+    app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+  ports:
+    - name: http
+      port: {{ $settings.port }}
+      targetPort: http
+      {{- if eq $settings.service.type "NodePort" }}
+      nodePort: {{ $settings.service.nodePort }}
+      {{- end }}
+{{- end }}
+{{- end }}

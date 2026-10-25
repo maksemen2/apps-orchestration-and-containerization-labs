@@ -1,0 +1,159 @@
+{{- if .Values.monitoring.enabled }}
+{{- $root := . }}
+{{- range .Values.monitoring.remoteNodes }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $root.Release.Name }}-hubble-{{ .name }}
+  labels:
+    app.kubernetes.io/instance: {{ $root.Release.Name | quote }}
+    app.kubernetes.io/part-of: lab5-network
+    network-job: hubble
+    remote-node: {{ .name | quote }}
+    cluster: lab5
+spec:
+  ports:
+    - name: metrics
+      port: {{ $root.Values.monitoring.ports.hubble }}
+      targetPort: {{ $root.Values.monitoring.ports.hubble }}
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: {{ $root.Release.Name }}-hubble-{{ .name }}
+  labels:
+    kubernetes.io/service-name: {{ $root.Release.Name }}-hubble-{{ .name }}
+    endpointslice.kubernetes.io/managed-by: lab5-network-chart
+addressType: IPv4
+ports:
+  - name: metrics
+    port: {{ $root.Values.monitoring.ports.hubble }}
+    protocol: TCP
+endpoints:
+  - addresses: [{{ .address | quote }}]
+    conditions:
+      ready: true
+{{- end }}
+{{- with first .Values.monitoring.remoteNodes }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $root.Release.Name }}-coredns
+  labels:
+    app.kubernetes.io/instance: {{ $root.Release.Name | quote }}
+    app.kubernetes.io/part-of: lab5-network
+    network-job: coredns
+    remote-node: {{ .name | quote }}
+    cluster: lab5
+spec:
+  ports:
+    - name: metrics
+      port: 9153
+      targetPort: {{ $root.Values.monitoring.ports.dns }}
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: {{ $root.Release.Name }}-coredns
+  labels:
+    kubernetes.io/service-name: {{ $root.Release.Name }}-coredns
+    endpointslice.kubernetes.io/managed-by: lab5-network-chart
+addressType: IPv4
+ports:
+  - name: metrics
+    port: {{ $root.Values.monitoring.ports.dns }}
+    protocol: TCP
+endpoints:
+  - addresses: [{{ .address | quote }}]
+    conditions:
+      ready: true
+{{- end }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-network
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    release: {{ .Values.monitoring.release | quote }}
+spec:
+  serviceDiscoveryRole: EndpointSlice
+  jobLabel: network-job
+  namespaceSelector:
+    matchNames: [{{ .Release.Namespace | quote }}]
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+      app.kubernetes.io/part-of: lab5-network
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.monitoring.scrapeInterval }}
+      relabelings:
+        - targetLabel: cluster
+          replacement: lab5
+        - sourceLabels: [__meta_kubernetes_service_label_remote_node]
+          targetLabel: node
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}-network
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    release: {{ .Values.monitoring.release | quote }}
+spec:
+  groups:
+    - name: lab5-network
+      interval: {{ .Values.monitoring.scrapeInterval }}
+      rules:
+        - alert: Lab5NetworkPolicyDrops
+          expr: sum(rate(hubble_drop_total{cluster="lab5",reason="POLICY_DENIED"}[1m])) > 0.1
+          for: {{ .Values.monitoring.alertFor }}
+          labels:
+            severity: warning
+            cluster: lab5
+          annotations:
+            summary: "Сетевые политики блокируют трафик lab5"
+            description: "Более 0.1 POLICY_DENIED пакетов/с за последнюю минуту."
+        - alert: Lab5TCPResetRatio
+          expr: |
+            (
+              sum(rate(hubble_tcp_flags_total{cluster="lab5",flag="RST"}[1m]))
+              /
+              sum(rate(hubble_tcp_flags_total{cluster="lab5",flag="SYN"}[1m]))
+            ) > 0.5
+            and
+            sum(rate(hubble_tcp_flags_total{cluster="lab5",flag="SYN"}[1m])) > 0.1
+          for: {{ .Values.monitoring.alertFor }}
+          labels:
+            severity: warning
+            cluster: lab5
+          annotations:
+            summary: "Высокая доля TCP RST в lab5"
+            description: "RST/SYN > 0.5 при SYN > 0.1 пакетов/с; это сигнал сбросов, а не точная доля неуспешных соединений."
+        - alert: Lab5DNSErrors
+          expr: sum(rate(coredns_dns_responses_total{cluster="lab5",rcode=~"SERVFAIL|REFUSED"}[1m])) > 0
+          for: {{ .Values.monitoring.alertFor }}
+          labels:
+            severity: warning
+            cluster: lab5
+          annotations:
+            summary: "CoreDNS возвращает SERVFAIL или REFUSED в lab5"
+            description: "Есть DNS-ответы SERVFAIL/REFUSED за последнюю минуту."
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-network-dashboard
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    grafana_dashboard: "1"
+data:
+  lab5-network.json: |
+    {{- .Files.Get "dashboards/network.json" | nindent 4 }}
+{{- end }}

@@ -1,0 +1,103 @@
+workloads:
+  enabled: true
+api:
+  label: api
+  replicas: 3
+  port: 8080
+  image:
+    repository: registry.lab.local/shop/api
+    tag: "0.2.0"
+    pullPolicy: IfNotPresent
+  healthFail: false
+  service:
+    type: NodePort
+    nodePort: 30080
+    externalTrafficPolicy: Cluster
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  pdb:
+    minAvailable: 2
+worker:
+  label: worker
+  replicas: 2
+  port: 8080
+  image:
+    repository: registry.lab.local/shop/worker
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  healthFail: false
+  service:
+    type: NodePort
+    nodePort: 30081
+    externalTrafficPolicy: Local
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+database:
+  label: postgres
+  port: 5432
+  instanceManagerPort: 8000
+  instances: 1
+  image: ghcr.io/cloudnative-pg/postgresql:17.6
+  isolationCheckEnabled: false
+  enablePDB: true
+  storage:
+    size: 1Gi
+    storageClass: standard
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+networkPolicy:
+  enabled: true
+  dns:
+    namespace: kube-system
+    podLabels:
+      k8s-app: kube-dns
+    port: 53
+  client:
+    namespace: clients
+    podLabels:
+      app: client
+  databaseEgressPorts:
+    api: 5432
+    worker: 5432
+  databaseIngressLabels:
+    api: api
+    worker: worker
+  cnpgOperator:
+    namespace: cnpg-system
+    podLabels:
+      app.kubernetes.io/name: cloudnative-pg
+  apiExternalCIDRs:
+    - 0.0.0.0/0
+  monitoringCIDRs:
+    - 172.19.0.2/32
+  apiServerCIDRs:
+    - 172.19.0.5/32
+  apiServerPort: 6443
+monitoring:
+  enabled: false
+  release: monitoring
+  remoteNodes:
+    - name: control-plane
+      address: 172.19.0.5
+    - name: worker
+      address: 172.19.0.6
+  ports:
+    dns: 30953
+    hubble: 9965
+  scrapeInterval: 15s
+  alertFor: 30s

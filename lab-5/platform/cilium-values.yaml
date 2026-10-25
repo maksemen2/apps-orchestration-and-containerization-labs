@@ -1,0 +1,21 @@
+ipam:
+  mode: kubernetes
+kubeProxyReplacement: false
+policyCIDRMatchMode:
+  - nodes
+operator:
+  replicas: 1
+image:
+  pullPolicy: IfNotPresent
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  metrics:
+    enabled:
+      - drop
+      - tcp
+      - flow
+      - dns
