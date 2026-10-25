@@ -1,0 +1,122 @@
+[
+  {
+    "round": 1,
+    "case": "good",
+    "http_seconds": 15.71,
+    "response": {
+      "release_id": "release-2026.10.25-good",
+      "decision": "approved",
+      "reasons": [],
+      "report": "/results/release-2026.10.25-good.md",
+      "tool_calls": 4,
+      "execution_id": "18",
+      "duration_seconds": 15.573
+    }
+  },
+  {
+    "round": 1,
+    "case": "bad",
+    "http_seconds": 14.855,
+    "response": {
+      "release_id": "release-2026.10.25-bad",
+      "decision": "blocked",
+      "reasons": [
+        "Required check failed: migration"
+      ],
+      "report": "/results/release-2026.10.25-bad.md",
+      "tool_calls": 4,
+      "execution_id": "19",
+      "duration_seconds": 14.796
+    }
+  },
+  {
+    "round": 2,
+    "case": "good",
+    "http_seconds": 18.138,
+    "response": {
+      "release_id": "release-2026.10.25-good",
+      "decision": "approved",
+      "reasons": [],
+      "report": "/results/release-2026.10.25-good.md",
+      "tool_calls": 4,
+      "execution_id": "20",
+      "duration_seconds": 18.07
+    }
+  },
+  {
+    "round": 2,
+    "case": "bad",
+    "http_seconds": 18.82,
+    "response": {
+      "release_id": "release-2026.10.25-bad",
+      "decision": "blocked",
+      "reasons": [
+        "Required check failed: migration"
+      ],
+      "report": "/results/release-2026.10.25-bad.md",
+      "tool_calls": 4,
+      "execution_id": "21",
+      "duration_seconds": 18.755
+    }
+  },
+  {
+    "round": 3,
+    "case": "good",
+    "http_seconds": 16.922,
+    "response": {
+      "release_id": "release-2026.10.25-good",
+      "decision": "approved",
+      "reasons": [],
+      "report": "/results/release-2026.10.25-good.md",
+      "tool_calls": 4,
+      "execution_id": "22",
+      "duration_seconds": 16.857
+    }
+  },
+  {
+    "round": 3,
+    "case": "bad",
+    "http_seconds": 15.89,
+    "response": {
+      "release_id": "release-2026.10.25-bad",
+      "decision": "blocked",
+      "reasons": [
+        "Required check failed: migration"
+      ],
+      "report": "/results/release-2026.10.25-bad.md",
+      "tool_calls": 4,
+      "execution_id": "23",
+      "duration_seconds": 15.826
+    }
+  },
+  {
+    "round": 4,
+    "case": "good",
+    "http_seconds": 15.852,
+    "response": {
+      "release_id": "release-2026.10.25-good",
+      "decision": "approved",
+      "reasons": [],
+      "report": "/results/release-2026.10.25-good.md",
+      "tool_calls": 4,
+      "execution_id": "24",
+      "duration_seconds": 15.794
+    }
+  },
+  {
+    "round": 4,
+    "case": "bad",
+    "http_seconds": 15.464,
+    "response": {
+      "release_id": "release-2026.10.25-bad",
+      "decision": "blocked",
+      "reasons": [
+        "Required check failed: migration"
+      ],
+      "report": "/results/release-2026.10.25-bad.md",
+      "tool_calls": 4,
+      "execution_id": "25",
+      "duration_seconds": 15.398
+    }
+  }
+]

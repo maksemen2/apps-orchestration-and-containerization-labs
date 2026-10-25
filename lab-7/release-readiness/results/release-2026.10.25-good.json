@@ -1,0 +1,153 @@
+{
+  "release_id": "release-2026.10.25-good",
+  "environment": "staging",
+  "execution_id": "24",
+  "summary": "Релиз release-2026.10.25-good прошёл все обязательные проверки: unit, integration, migration и security. Среда staging здоровая, с 40% свободной емкости. Для сервиса shop-api доступен рукун, включающий восстановление образа и проверку после отката. Все данные получены, ошибок инструментов не обнаружено.",
+  "evidence": {
+    "release": {
+      "release_id": "release-2026.10.25-good",
+      "service": "shop-api",
+      "version": "2026.10.25",
+      "image_digest": "sha256:743f1acb2e9945df04fdb15de7d693acf2505e6a58e718c6333e21f8b4c9d07a",
+      "image_signed": true,
+      "digest_pinned": true,
+      "rollback_ready": true
+    },
+    "checks": {
+      "release_id": "release-2026.10.25-good",
+      "checks": [
+        {
+          "name": "unit",
+          "required": true,
+          "status": "passed",
+          "detail": "412 tests passed"
+        },
+        {
+          "name": "integration",
+          "required": true,
+          "status": "passed",
+          "detail": "63 tests passed"
+        },
+        {
+          "name": "migration",
+          "required": true,
+          "status": "passed",
+          "detail": "staging migration dry run passed"
+        },
+        {
+          "name": "security",
+          "required": true,
+          "status": "passed",
+          "detail": "no critical findings"
+        }
+      ]
+    },
+    "environment": {
+      "environment": "staging",
+      "status": "healthy",
+      "free_capacity_percent": 40,
+      "shop_api_healthy": true,
+      "detail": "Mock snapshot: staging probes healthy, 40% headroom"
+    },
+    "runbook": {
+      "service": "shop-api",
+      "rollback_supported": true,
+      "rollback_steps": [
+        "Restore the previous signed image digest in the deployment manifest.",
+        "Roll back the database only with the approved reversible migration procedure.",
+        "Verify readiness, order API probes, and error rate after rollback."
+      ],
+      "owner": "ShopFlow DevOps"
+    }
+  },
+  "tool_calls": [
+    {
+      "server": "release-mcp",
+      "tool": "get_release",
+      "arguments": {
+        "release_id": "release-2026.10.25-good"
+      },
+      "result": {
+        "release_id": "release-2026.10.25-good",
+        "service": "shop-api",
+        "version": "2026.10.25",
+        "image_digest": "sha256:743f1acb2e9945df04fdb15de7d693acf2505e6a58e718c6333e21f8b4c9d07a",
+        "image_signed": true,
+        "digest_pinned": true,
+        "rollback_ready": true
+      }
+    },
+    {
+      "server": "release-mcp",
+      "tool": "get_checks",
+      "arguments": {
+        "release_id": "release-2026.10.25-good"
+      },
+      "result": {
+        "release_id": "release-2026.10.25-good",
+        "checks": [
+          {
+            "name": "unit",
+            "required": true,
+            "status": "passed",
+            "detail": "412 tests passed"
+          },
+          {
+            "name": "integration",
+            "required": true,
+            "status": "passed",
+            "detail": "63 tests passed"
+          },
+          {
+            "name": "migration",
+            "required": true,
+            "status": "passed",
+            "detail": "staging migration dry run passed"
+          },
+          {
+            "name": "security",
+            "required": true,
+            "status": "passed",
+            "detail": "no critical findings"
+          }
+        ]
+      }
+    },
+    {
+      "server": "ops-mcp",
+      "tool": "get_environment",
+      "arguments": {
+        "environment": "staging"
+      },
+      "result": {
+        "environment": "staging",
+        "status": "healthy",
+        "free_capacity_percent": 40,
+        "shop_api_healthy": true,
+        "detail": "Mock snapshot: staging probes healthy, 40% headroom"
+      }
+    },
+    {
+      "server": "ops-mcp",
+      "tool": "get_runbook",
+      "arguments": {
+        "service": "shop-api"
+      },
+      "result": {
+        "service": "shop-api",
+        "rollback_supported": true,
+        "rollback_steps": [
+          "Restore the previous signed image digest in the deployment manifest.",
+          "Roll back the database only with the approved reversible migration procedure.",
+          "Verify readiness, order API probes, and error rate after rollback."
+        ],
+        "owner": "ShopFlow DevOps"
+      }
+    }
+  ],
+  "model": "qwen3:4b-instruct",
+  "decision": "approved",
+  "reasons": [],
+  "duration_seconds": 15.794,
+  "reported_at": "2026-10-25T18:17:55.867965+00:00"
+}

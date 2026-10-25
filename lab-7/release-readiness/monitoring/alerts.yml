@@ -1,0 +1,32 @@
+groups:
+  - name: release-readiness
+    rules:
+      - alert: N8nUnavailable
+        # A failed scrape means the orchestrator cannot accept or execute workflows.
+        expr: up{job="n8n"} == 0
+        for: 20s
+        labels:
+          severity: critical
+        annotations:
+          summary: "n8n недоступен"
+          description: "Prometheus не может получить метрики n8n в течение 20 секунд. Проверьте контейнер и порт 5678."
+
+      - alert: ReleaseCheckFailed
+        # Reporting/exporter failures need review; the counter is scoped to the agent job.
+        expr: sum(increase(release_checks_total{job="agent",status="error"}[2m])) > 0
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ошибка проверки готовности релиза"
+          description: "За последние 2 минуты завершилась хотя бы одна проверка с ошибкой. Проверьте журнал проверок."
+
+      - alert: ReleaseCheckSlow
+        # Require traffic so an idle or nearly idle exporter cannot trigger a noisy p95.
+        expr: histogram_quantile(0.95, sum by (le) (rate(release_check_duration_seconds_bucket{job="agent"}[2m]))) > 30 and sum(rate(release_check_duration_seconds_count{job="agent"}[2m])) > 0.01
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Медленная проверка готовности релиза"
+          description: "p95 длительности проверки превышает 30 секунд при достаточном числе проверок в течение 30 секунд."

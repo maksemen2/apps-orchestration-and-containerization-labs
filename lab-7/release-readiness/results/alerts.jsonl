@@ -1,0 +1,6 @@
+{"received_at": "2026-10-25T18:09:44.206203+00:00", "status": "firing", "alerts": [{"name": "ReleaseCheckFailed", "status": "firing", "starts_at": "2026-10-25T18:09:39.186Z"}]}
+{"received_at": "2026-10-25T18:11:44.198692+00:00", "status": "resolved", "alerts": [{"name": "ReleaseCheckFailed", "status": "resolved", "starts_at": "2026-10-25T18:09:39.186Z"}]}
+{"received_at": "2026-10-25T18:15:14.174467+00:00", "status": "firing", "alerts": [{"name": "ReleaseCheckFailed", "status": "firing", "starts_at": "2026-10-25T18:15:04.186Z"}]}
+{"received_at": "2026-10-25T18:17:14.171780+00:00", "status": "resolved", "alerts": [{"name": "ReleaseCheckFailed", "status": "resolved", "starts_at": "2026-10-25T18:15:04.186Z"}]}
+{"received_at": "2026-10-25T18:19:29.158172+00:00", "status": "firing", "alerts": [{"name": "N8nUnavailable", "status": "firing", "starts_at": "2026-10-25T18:19:19.186Z"}]}
+{"received_at": "2026-10-25T18:20:29.154976+00:00", "status": "resolved", "alerts": [{"name": "N8nUnavailable", "status": "resolved", "starts_at": "2026-10-25T18:19:19.186Z"}]}

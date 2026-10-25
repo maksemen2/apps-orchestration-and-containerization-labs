@@ -1,0 +1,77 @@
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 5s
+
+tests:
+  - name: n8n scrape fails continuously
+    interval: 5s
+    input_series:
+      - series: 'up{job="n8n"}'
+        values: '1 1 1 0+0x12'
+    alert_rule_test:
+      - eval_time: 30s
+        alertname: N8nUnavailable
+        exp_alerts: []
+      - eval_time: 35s
+        alertname: N8nUnavailable
+        exp_alerts:
+          - exp_labels:
+              job: n8n
+              severity: critical
+            exp_annotations:
+              summary: "n8n недоступен"
+              description: "Prometheus не может получить метрики n8n в течение 20 секунд. Проверьте контейнер и порт 5678."
+
+  - name: reporting exporter reports a failed release check
+    interval: 5s
+    input_series:
+      - series: 'release_checks_total{job="agent",status="error"}'
+        values: '0+1x30'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ReleaseCheckFailed
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "Ошибка проверки готовности релиза"
+              description: "За последние 2 минуты завершилась хотя бы одна проверка с ошибкой. Проверьте журнал проверок."
+
+  - name: slow release check with sufficient traffic
+    interval: 5s
+    input_series:
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="0.5"}'
+        values: '0+0x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="1"}'
+        values: '0+0x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="2"}'
+        values: '0+0x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="5"}'
+        values: '0+0x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="10"}'
+        values: '0+0x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="20"}'
+        values: '0+0x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="30"}'
+        values: '0+0x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="60"}'
+        values: '0+1x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="120"}'
+        values: '0+1x40'
+      - series: 'release_check_duration_seconds_bucket{job="agent",le="+Inf"}'
+        values: '0+1x40'
+      - series: 'release_check_duration_seconds_count{job="agent"}'
+        values: '0+1x40'
+    alert_rule_test:
+      - eval_time: 20s
+        alertname: ReleaseCheckSlow
+        exp_alerts: []
+      - eval_time: 40s
+        alertname: ReleaseCheckSlow
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "Медленная проверка готовности релиза"
+              description: "p95 длительности проверки превышает 30 секунд при достаточном числе проверок в течение 30 секунд."

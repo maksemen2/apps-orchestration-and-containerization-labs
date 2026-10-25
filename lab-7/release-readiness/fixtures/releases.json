@@ -1,0 +1,20 @@
+{
+  "release-2026.10.25-good": {
+    "release_id": "release-2026.10.25-good",
+    "service": "shop-api",
+    "version": "2026.10.25",
+    "image_digest": "sha256:743f1acb2e9945df04fdb15de7d693acf2505e6a58e718c6333e21f8b4c9d07a",
+    "image_signed": true,
+    "digest_pinned": true,
+    "rollback_ready": true
+  },
+  "release-2026.10.25-bad": {
+    "release_id": "release-2026.10.25-bad",
+    "service": "shop-api",
+    "version": "2026.10.25-rc2",
+    "image_digest": "sha256:11c0f7348b1ed97d0d1bb66a5965a7e2aaee6ddc2c199c669d025e4f4caf38b2",
+    "image_signed": true,
+    "digest_pinned": true,
+    "rollback_ready": true
+  }
+}

@@ -1,0 +1,69 @@
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 591.0
+python_gc_objects_collected_total{generation="1"} 64.0
+python_gc_objects_collected_total{generation="2"} 0.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 112.0
+python_gc_collections_total{generation="1"} 10.0
+python_gc_collections_total{generation="2"} 0.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="12",patchlevel="15",version="3.12.15"} 1.0
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 1.36097792e+08
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 5.1163136e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.79295160612e+09
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 2.06
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 10.0
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1.048576e+06
+# HELP release_checks_total Release checks completed
+# TYPE release_checks_total counter
+release_checks_total{status="success"} 10.0
+release_checks_total{status="error"} 2.0
+# HELP release_checks_created Release checks completed
+# TYPE release_checks_created gauge
+release_checks_created{status="success"} 1.7929516074450986e+09
+release_checks_created{status="error"} 1.792951607445104e+09
+# HELP release_check_duration_seconds Release check wall time in seconds
+# TYPE release_check_duration_seconds histogram
+release_check_duration_seconds_bucket{le="0.5"} 0.0
+release_check_duration_seconds_bucket{le="1.0"} 0.0
+release_check_duration_seconds_bucket{le="2.0"} 0.0
+release_check_duration_seconds_bucket{le="5.0"} 0.0
+release_check_duration_seconds_bucket{le="10.0"} 0.0
+release_check_duration_seconds_bucket{le="20.0"} 9.0
+release_check_duration_seconds_bucket{le="30.0"} 10.0
+release_check_duration_seconds_bucket{le="60.0"} 12.0
+release_check_duration_seconds_bucket{le="120.0"} 12.0
+release_check_duration_seconds_bucket{le="+Inf"} 12.0
+release_check_duration_seconds_count 12.0
+release_check_duration_seconds_sum 256.702
+# HELP release_check_duration_seconds_created Release check wall time in seconds
+# TYPE release_check_duration_seconds_created gauge
+release_check_duration_seconds_created 1.7929516074450638e+09
+# HELP release_reports_total Reports written
+# TYPE release_reports_total counter
+release_reports_total{decision="approved"} 5.0
+release_reports_total{decision="blocked"} 5.0
+# HELP release_reports_created Reports written
+# TYPE release_reports_created gauge
+release_reports_created{decision="approved"} 1.7929516074451077e+09
+release_reports_created{decision="blocked"} 1.7929516074451106e+09

@@ -1,0 +1,12 @@
+{
+  "shop-api": {
+    "service": "shop-api",
+    "rollback_supported": true,
+    "rollback_steps": [
+      "Restore the previous signed image digest in the deployment manifest.",
+      "Roll back the database only with the approved reversible migration procedure.",
+      "Verify readiness, order API probes, and error rate after rollback."
+    ],
+    "owner": "ShopFlow DevOps"
+  }
+}

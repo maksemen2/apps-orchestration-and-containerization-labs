@@ -1,0 +1,1 @@
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"ReleaseCheckFailed","severity":"warning"},"annotations":{"description":"За последние 2 минуты завершилась хотя бы одна проверка с ошибкой. Проверьте журнал проверок.","summary":"Ошибка проверки готовности релиза"},"state":"firing","activeAt":"2026-10-25T18:15:04.186160266Z","value":"1.0435236314622374e+00"}]}}

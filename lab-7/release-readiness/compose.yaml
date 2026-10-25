@@ -1,0 +1,89 @@
+name: lab7-release-readiness
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.44.6@sha256:d02752c6ab446ae9db8deec2f9cc887c378f77cdcad31650814df936b7386dfb
+    ports: ["127.0.0.1:45678:5678"]
+    environment:
+      TZ: Europe/Moscow
+      GENERIC_TIMEZONE: Europe/Moscow
+      N8N_METRICS: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_SECURE_COOKIE: "false"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: all
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      N8N_WEBHOOK_URL: http://localhost:45678/
+    volumes:
+      - n8n-data:/home/node/.n8n
+      - ./workflow.json:/import/workflow.json:ro
+
+  ollama:
+    image: ollama/ollama:0.40.11@sha256:dea72d1e22270fe095b68fdf756d2b489d615643c5a2eaebbc5f569181e322d8
+    ports: ["127.0.0.1:41434:11434"]
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m
+      OLLAMA_NUM_PARALLEL: "1"
+    volumes: ["ollama-data:/root/.ollama"]
+
+  agent:
+    build:
+      context: .
+      dockerfile: service/Dockerfile
+    image: lab7-release-agent:1.0.0
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports: ["127.0.0.1:48000:8000"]
+    environment:
+      RESULTS_DIR: /results
+    volumes: ["./results:/results"]
+
+  release-mcp:
+    image: lab7-release-agent:1.0.0
+    command: ["python", "release_server.py"]
+    volumes: ["./fixtures:/fixtures:ro"]
+
+  ops-mcp:
+    image: lab7-release-agent:1.0.0
+    command: ["python", "ops_server.py"]
+    volumes: ["./fixtures:/fixtures:ro"]
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    ports: ["127.0.0.1:49090:9090"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:12.2.1
+    ports: ["127.0.0.1:43000:3000"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    ports: ["127.0.0.1:49093:9093"]
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+
+volumes:
+  n8n-data:
+  ollama-data:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:

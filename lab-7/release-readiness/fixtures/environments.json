@@ -1,0 +1,9 @@
+{
+  "staging": {
+    "environment": "staging",
+    "status": "healthy",
+    "free_capacity_percent": 40,
+    "shop_api_healthy": true,
+    "detail": "Mock snapshot: staging probes healthy, 40% headroom"
+  }
+}

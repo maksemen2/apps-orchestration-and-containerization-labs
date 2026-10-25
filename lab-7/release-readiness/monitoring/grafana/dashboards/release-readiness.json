@@ -1,0 +1,69 @@
+{
+  "uid": "release-readiness",
+  "title": "Release readiness",
+  "description": "Доступность n8n, reporting/exporter и MCP-серверов, исходы и длительность проверок, вызовы инструментов и решения по релизам.",
+  "tags": ["release-readiness", "lab-7"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "editable": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Доступность n8n, exporter и MCP-серверов",
+      "description": "1 означает успешный сбор метрик; 0 — сервис не отвечает Prometheus.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "up{job=~\"n8n|agent|release-mcp|ops-mcp\"}", "legendFormat": "{{job}}", "range": true }],
+      "fieldConfig": { "defaults": { "min": 0, "max": 1, "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Проверки релиза: успехи и ошибки",
+      "description": "Прирост счётчика за минуту, отдельно по статусу.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum by (status) (increase(release_checks_total{job=\"agent\"}[1m]))", "legendFormat": "{{status}}", "range": true }],
+      "fieldConfig": { "defaults": { "min": 0, "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Длительность проверки релиза, p95",
+      "description": "95-й перцентиль длительности проверки за две минуты; порог алерта — 30 секунд.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "histogram_quantile(0.95, sum by (le) (rate(release_check_duration_seconds_bucket{job=\"agent\"}[2m])))", "legendFormat": "p95", "range": true }],
+      "fieldConfig": { "defaults": { "min": 0, "unit": "s" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "single" } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Вызовы MCP по серверу и инструменту",
+      "description": "Частота вызовов инструментов MCP за пять минут.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum by (server, tool, status) (rate(mcp_tool_calls_total{job=~\"release-mcp|ops-mcp\"}[5m]))", "legendFormat": "{{server}} / {{tool}} / {{status}}", "range": true }],
+      "fieldConfig": { "defaults": { "min": 0, "unit": "ops" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Решения о готовности релиза",
+      "description": "Число итоговых решений за пять минут по каждому типу.",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum by (decision) (increase(release_reports_total{job=\"agent\"}[5m]))", "legendFormat": "{{decision}}", "range": true }],
+      "fieldConfig": { "defaults": { "min": 0, "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "release_id": "release-unknown",
+  "environment": "staging",
+  "execution_id": "17",
+  "error": "Missing evidence from get_release [line 27]",
+  "duration_seconds": 13.974,
+  "failed_at": "2026-10-25T18:14:58.640047+00:00"
+}

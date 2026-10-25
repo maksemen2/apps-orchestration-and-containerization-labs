@@ -1,0 +1,20 @@
+{
+  "release-2026.10.25-good": {
+    "release_id": "release-2026.10.25-good",
+    "checks": [
+      {"name": "unit", "required": true, "status": "passed", "detail": "412 tests passed"},
+      {"name": "integration", "required": true, "status": "passed", "detail": "63 tests passed"},
+      {"name": "migration", "required": true, "status": "passed", "detail": "staging migration dry run passed"},
+      {"name": "security", "required": true, "status": "passed", "detail": "no critical findings"}
+    ]
+  },
+  "release-2026.10.25-bad": {
+    "release_id": "release-2026.10.25-bad",
+    "checks": [
+      {"name": "unit", "required": true, "status": "passed", "detail": "412 tests passed"},
+      {"name": "integration", "required": true, "status": "passed", "detail": "63 tests passed"},
+      {"name": "migration", "required": true, "status": "failed", "detail": "migration would lock orders table for 14 minutes"},
+      {"name": "security", "required": true, "status": "passed", "detail": "no critical findings"}
+    ]
+  }
+}

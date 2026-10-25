@@ -1,0 +1,1 @@
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"N8nUnavailable","instance":"n8n:5678","job":"n8n","severity":"critical"},"annotations":{"description":"Prometheus не может получить метрики n8n в течение 20 секунд. Проверьте контейнер и порт 5678.","summary":"n8n недоступен"},"state":"firing","activeAt":"2026-10-25T18:18:59.186160266Z","value":"0e+00"}]}}
