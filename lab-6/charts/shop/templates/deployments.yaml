@@ -1,0 +1,88 @@
+{{- range $version := list "v1" "v2" }}
+{{- $settings := index $.Values.api.versions $version }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-api-{{ $version }}
+  labels:
+    app: shop-api
+    version: {{ $version }}
+    app.kubernetes.io/name: api
+    {{- include "shop.labels" $ | nindent 4 }}
+spec:
+  replicas: {{ $settings.replicas }}
+  selector:
+    matchLabels:
+      app: shop-api
+      version: {{ $version }}
+      app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: shop-api
+        version: {{ $version }}
+        app.kubernetes.io/name: api
+        {{- include "shop.labels" $ | nindent 8 }}
+      {{- if $.Values.mesh.enabled }}
+      annotations:
+        linkerd.io/inject: enabled
+        config.linkerd.io/proxy-cpu-request: {{ $.Values.mesh.proxyResources.requests.cpu | quote }}
+        config.linkerd.io/proxy-memory-request: {{ $.Values.mesh.proxyResources.requests.memory | quote }}
+        config.linkerd.io/proxy-cpu-limit: {{ $.Values.mesh.proxyResources.limits.cpu | quote }}
+        config.linkerd.io/proxy-memory-limit: {{ $.Values.mesh.proxyResources.limits.memory | quote }}
+      {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: {{ printf "%s:%s" $.Values.api.image.repository $settings.tag | quote }}
+          imagePullPolicy: {{ $.Values.api.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $.Values.api.port }}
+          env:
+            - name: APP_VERSION
+              value: {{ $version | quote }}
+            - name: FAIL
+              value: {{ $settings.fail | quote }}
+            - name: FLAKY
+              value: {{ $settings.flaky | quote }}
+            - name: FLAKY_PERCENT
+              value: {{ $settings.flakyPercent | quote }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Release.Name }}-db-app
+                  key: uri
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            {{- toYaml $.Values.api.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 3
+{{- end }}

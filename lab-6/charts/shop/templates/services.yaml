@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-api
+  labels:
+    app.kubernetes.io/name: api
+    shop-monitor: app
+    {{- include "shop.labels" . | nindent 4 }}
+  {{- if and .Values.mesh.enabled (gt (int .Values.mesh.retries.attempts) 0) }}
+  annotations:
+    retry.linkerd.io/http: {{ .Values.mesh.retries.retryOn | quote }}
+    retry.linkerd.io/limit: {{ .Values.mesh.retries.attempts | quote }}
+    retry.linkerd.io/timeout: {{ .Values.mesh.retries.timeout | quote }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  selector:
+    app: shop-api
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+    - name: http
+      port: {{ .Values.api.port }}
+      targetPort: http
+{{- range $version := list "v1" "v2" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Release.Name }}-api-{{ $version }}
+  labels:
+    app.kubernetes.io/name: api
+    version: {{ $version }}
+    {{- include "shop.labels" $ | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: shop-api
+    version: {{ $version }}
+    app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+  ports:
+    - name: http
+      port: {{ $.Values.api.port }}
+      targetPort: http
+{{- end }}

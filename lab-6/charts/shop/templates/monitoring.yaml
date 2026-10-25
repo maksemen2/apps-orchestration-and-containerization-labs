@@ -1,0 +1,105 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-app
+  labels:
+    app.kubernetes.io/name: shop
+    {{- include "shop.labels" . | nindent 4 }}
+    release: {{ .Values.monitoring.release | quote }}
+spec:
+  namespaceSelector:
+    matchNames: [{{ .Release.Namespace | quote }}]
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: shop
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+      shop-monitor: app
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.monitoring.scrapeInterval }}
+      honorLabels: true
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_version]
+          targetLabel: version
+{{- if .Values.mesh.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ .Release.Name }}-proxies
+  labels:
+    app.kubernetes.io/name: shop
+    {{- include "shop.labels" . | nindent 4 }}
+    release: {{ .Values.monitoring.release | quote }}
+spec:
+  namespaceSelector:
+    matchNames: [{{ .Release.Namespace | quote }}]
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: shop
+  podMetricsEndpoints:
+    - port: linkerd-admin
+      path: /metrics
+      interval: {{ .Values.monitoring.scrapeInterval }}
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_version]
+          targetLabel: version
+{{- end }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}-mesh
+  labels:
+    app.kubernetes.io/name: shop
+    {{- include "shop.labels" . | nindent 4 }}
+    release: {{ .Values.monitoring.release | quote }}
+spec:
+  groups:
+    - name: shop.mesh
+      rules:
+        - alert: ShopApiBusiness5xxRatio
+          expr: >-
+            sum by (version) (rate(http_errors_total{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route=~"/order|/orders"}[1m]))
+            /
+            clamp_min(sum by (version) (rate(http_requests_total{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route=~"/order|/orders"}[1m])), 0.001)
+            > 0.05
+          for: {{ .Values.monitoring.alertFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: Shop API business 5xx ratio exceeds 5% on {{ "{{ $labels.version }}" }}
+        - alert: ShopApiBusinessP95Latency
+          expr: >-
+            histogram_quantile(0.95, sum by (version, le) (rate(http_request_duration_seconds_bucket{namespace="{{ .Release.Namespace }}",service="{{ .Release.Name }}-api",route=~"/order|/orders"}[1m]))) > 0.2
+          for: {{ .Values.monitoring.alertFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: Shop API business p95 exceeds 200 ms on {{ "{{ $labels.version }}" }}
+        - alert: ShopApiUpstreamRetries
+          expr: >-
+            sum(rate(outbound_http_route_retry_requests_total{namespace="{{ .Release.Namespace }}",parent_name="{{ .Release.Name }}-api",pod=~"{{ .Release.Name }}-load-.*"}[1m])) > 0.1
+          for: {{ .Values.monitoring.alertFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: Shop API upstream retries exceed 0.1/s
+{{- if .Values.monitoring.dashboard.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-mesh-dashboard
+  labels:
+    app.kubernetes.io/name: shop
+    {{- include "shop.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+    release: {{ .Values.monitoring.release | quote }}
+data:
+  lab6-mesh.json: |
+    {{- .Files.Get "dashboards/mesh.json" | nindent 4 }}
+{{- end }}
+{{- end }}

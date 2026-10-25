@@ -1,0 +1,37 @@
+alertmanager:
+  config:
+    route:
+      receiver: local
+      group_by: [namespace, alertname]
+      group_wait: 10s
+      group_interval: 30s
+      repeat_interval: 5m
+    receivers:
+      - name: local
+grafana:
+  additionalDataSources: []
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+      org_role: Viewer
+    date_formats:
+      default_timezone: Europe/Moscow
+prometheus:
+  prometheusSpec:
+    scrapeInterval: 10s
+    evaluationInterval: 10s
+    retention: 6h
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false

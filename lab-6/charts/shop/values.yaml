@@ -1,0 +1,65 @@
+api:
+  port: 8080
+  image:
+    repository: registry.lab.local/shop/api
+    pullPolicy: IfNotPresent
+  versions:
+    v1:
+      replicas: 2
+      tag: v1
+      fail: false
+      flaky: false
+      flakyPercent: 20
+    v2:
+      replicas: 1
+      tag: v2
+      fail: false
+      flaky: false
+      flakyPercent: 20
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+database:
+  instances: 1
+  image: ghcr.io/cloudnative-pg/postgresql:17.6
+  storage:
+    size: 1Gi
+    storageClass: standard
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+mesh:
+  enabled: true
+  canaryWeight: 100
+  retries:
+    attempts: 0
+    timeout: 500ms
+    retryOn: 5xx
+  proxyResources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 500m
+      memory: 128Mi
+gate:
+  enabled: true
+  image:
+    repository: registry.lab.local/shop/gate
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+monitoring:
+  enabled: true
+  release: monitoring
+  scrapeInterval: 15s
+  alertFor: 30s
+  dashboard:
+    enabled: true

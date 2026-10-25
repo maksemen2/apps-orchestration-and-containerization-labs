@@ -1,0 +1,9 @@
+controllerReplicas: 1
+enablePodAntiAffinity: false
+
+proxy:
+  resources:
+    cpu:
+      request: 20m
+    memory:
+      request: 32Mi

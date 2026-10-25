@@ -6,9 +6,11 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -36,7 +38,15 @@ func main() {
 func handler(a *app.App) http.Handler {
 	mux := http.NewServeMux()
 	a.BaseRoutes(mux)
+	mux.HandleFunc("GET /version", func(w http.ResponseWriter, r *http.Request) {
+		app.JSON(w, http.StatusOK, struct {
+			Version string `json:"version"`
+		}{Version: app.Version})
+	})
 	mux.HandleFunc("POST /order", func(w http.ResponseWriter, r *http.Request) {
+		if injectBusinessFault(w, r) {
+			return
+		}
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		var input struct {
 			Item     string `json:"item"`
@@ -69,6 +79,9 @@ func handler(a *app.App) http.Handler {
 		app.JSON(w, http.StatusCreated, order)
 	})
 	mux.HandleFunc("GET /orders", func(w http.ResponseWriter, r *http.Request) {
+		if injectBusinessFault(w, r) {
+			return
+		}
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		orders, err := a.Store.List(ctx)
@@ -80,4 +93,33 @@ func handler(a *app.App) http.Handler {
 		app.JSON(w, http.StatusOK, orders)
 	})
 	return mux
+}
+
+func injectBusinessFault(w http.ResponseWriter, r *http.Request) bool {
+	delayMS, err := strconv.Atoi(os.Getenv("DELAY_MS"))
+	if err == nil && delayMS > 0 {
+		timer := time.NewTimer(time.Duration(delayMS) * time.Millisecond)
+		defer timer.Stop()
+		select {
+		case <-r.Context().Done():
+			return true
+		case <-timer.C:
+		}
+	}
+
+	fail := os.Getenv("FAIL") == "true"
+	if !fail && os.Getenv("FLAKY") == "true" {
+		percent := 20
+		if configured, err := strconv.Atoi(os.Getenv("FLAKY_PERCENT")); err == nil {
+			percent = configured
+		}
+		if percent > 0 {
+			fail = percent >= 100 || rand.IntN(100) < percent
+		}
+	}
+	if fail {
+		http.Error(w, "temporarily unavailable", http.StatusInternalServerError)
+		return true
+	}
+	return false
 }

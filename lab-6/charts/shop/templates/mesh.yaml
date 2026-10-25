@@ -1,0 +1,22 @@
+{{- if .Values.mesh.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Release.Name }}-api
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - group: ""
+      kind: Service
+      name: {{ .Release.Name }}-api
+      port: {{ .Values.api.port }}
+  rules:
+    - backendRefs:
+        - name: {{ .Release.Name }}-api-v1
+          port: {{ .Values.api.port }}
+          weight: {{ sub 100 (int .Values.mesh.canaryWeight) }}
+        - name: {{ .Release.Name }}-api-v2
+          port: {{ .Values.api.port }}
+          weight: {{ .Values.mesh.canaryWeight }}
+{{- end }}

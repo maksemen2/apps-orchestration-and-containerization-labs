@@ -1,0 +1,89 @@
+{{- if .Values.gate.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-release-gate
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-release-gate
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [gateway.networking.k8s.io]
+    resources: [httproutes]
+    resourceNames: [{{ printf "%s-api" .Release.Name | quote }}]
+    verbs: [get, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-release-gate
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Release.Name }}-release-gate
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-release-gate
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-release-gate
+  labels:
+    {{- include "shop.labels" . | nindent 4 }}
+spec:
+  schedule: "0 0 1 1 *"
+  suspend: true
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            {{- include "shop.labels" . | nindent 12 }}
+        spec:
+          serviceAccountName: {{ .Release.Name }}-release-gate
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: gate
+              image: {{ printf "%s:%s" .Values.gate.image.repository .Values.gate.image.tag | quote }}
+              imagePullPolicy: {{ .Values.gate.image.pullPolicy }}
+              env:
+                - name: TARGET_NAMESPACE
+                  value: {{ .Release.Namespace | quote }}
+                - name: ROUTE_NAME
+                  value: {{ printf "%s-api" .Release.Name | quote }}
+                - name: V1_BACKEND
+                  value: {{ printf "%s-api-v1" .Release.Name | quote }}
+                - name: V2_BACKEND
+                  value: {{ printf "%s-api-v2" .Release.Name | quote }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+{{- end }}
